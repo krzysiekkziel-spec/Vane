@@ -200,6 +200,24 @@ class SearchAgent {
         ),
       )
       .execute();
+    } catch (err) {
+      console.error('Search agent error:', err);
+
+      session.emit('error', {
+        data: err instanceof Error ? err.message : 'An error occurred during search',
+      });
+
+      await db
+        .update(messages)
+        .set({ status: 'error' })
+        .where(
+          and(
+            eq(messages.chatId, input.chatId),
+            eq(messages.messageId, input.messageId),
+          ),
+        )
+        .execute();
+    }
   }
 }
 
