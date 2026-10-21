@@ -1,0 +1,43 @@
+name: Build slim image to GHCR
+
+# Buduje obraz Vane (wariant slim) z naszej galęzi z poprawkami i publikuje go w GHCR.
+# Wyzwalane recznie albo wypchnieciem galezi.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - poprawki-2026-10
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobranie kodu
+        uses: actions/checkout@v4
+
+      - name: Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Logowanie do GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Budowa i publikacja
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/vane-slim"
+          echo "Obraz: $IMAGE"
+          docker buildx build \
+            --platform linux/amd64 \
+            -f Dockerfile.slim \
+            -t "$IMAGE:poprawki" \
+            -t "$IMAGE:poprawki-${GITHUB_SHA::7}" \
+            --provenance false \
+            --push .
