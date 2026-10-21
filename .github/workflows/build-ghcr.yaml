@@ -30,6 +30,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Ujednolicenie wersji Next.js (budowa = uruchomienie)
+        run: |
+          # Dockerfile.slim w fazie uruchomieniowej robi `yarn add playwright`, co przelicza
+          # `next` z zakresu ^16.0.7 na najnowszy (dzis 16.4.2), podczas gdy faza budowy
+          # uzywa wersji z yarn.lock (16.2.2). Rozjazd konczy sie brakiem preview-props.json.
+          # Przygotowujemy lock tak, by obie fazy mialy te sama wersje.
+          npm install -g yarn@1.22.22
+          yarn add next@16.4.2 --network-timeout 600000
+          echo "--- next w yarn.lock ---"
+          grep -A2 '^next@' yarn.lock | head -4
+
       - name: Budowa i publikacja
         run: |
           IMAGE="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/vane-slim"
